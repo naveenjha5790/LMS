@@ -1,0 +1,227 @@
+datasource db {
+  provider = "postgresql" // You can change this to mysql or cockroachdb if needed
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+
+// 👤 USER & AUTHENTICATION MANAGEMENT
+
+
+enum Role {
+  ADMIN
+  LMS_MANAGER
+  MODERATOR
+  CONTRIBUTOR
+  STUDENT
+}
+
+model User {
+  id               String            @id @default(uuid())
+  email            String            @unique
+  name             String
+  passwordHash     String
+  role             Role              @default(STUDENT)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  // Relations
+  createdPaths     LearningPath[]    @relation("ManagerPaths")
+  assignedPaths    StudentPath[]     
+  contributedTopics Topic[]          @relation("ContributorTopics")
+  studentProgress  StudentProgress[]
+  certificates     Certificate[]
+  notifications    Notification[]    @relation("UserNotifications")
+}
+
+// LEARNING PATH HIERARCHY & APPROVAL WORKFLOW
+
+enum PathStatus {
+  DRAFT                       // Manager is building the skeleton
+  PENDING_STRUCTURE_APPROVAL   // Sent to Moderator to review structure (Subjects/Chapters/Topics)
+  STRUCTURE_APPROVED          // Approved! Open for Contributors to add content
+  PENDING_FINAL_APPROVAL      // Content added, sent to Moderator for final sign-off
+  PUBLISHED                   // Approved & Live! Can now be assigned to students
+  REJECTED                    // Sent back by Moderator for changes
+}
+
+model LearningPath {
+  id          String         @id @default(uuid())
+  title       String
+  description String?
+  status      PathStatus     @default(DRAFT)
+  managerId   String
+  manager     User           @relation("ManagerPaths", fields: [managerId], references: [id])
+  rejectReason String?       // Stores feedback if a Moderator rejects the workflow
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  // Relations
+  subjects    Subject[]
+  students    StudentPath[]
+}
+
+model Subject {
+  id             String       @id @default(uuid())
+  title          String
+  order          Int          // Controls display sorting order (e.g., 1, 2, 3)
+  learningPathId String
+  learningPath   LearningPath @relation(fields: [learningPathId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  // Relations
+  chapters       Chapter[]
+}
+
+model Chapter {
+  id        String   @id @default(uuid())
+  title     String
+  order     Int
+  subjectId String
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt // Added the missing DateTime type here
+
+  // Relations
+  topics    Topic[]
+}
+
+
+enum TopicStatus {
+  EMPTY                       
+  DRAFT_CONTENT              
+  PENDING_CONTENT_APPROVAL    
+  APPROVED                    
+  REJECTED                    
+}
+
+model Topic {
+  id            String            @id @default(uuid())
+  title         String
+  order         Int
+  status        TopicStatus       @default(EMPTY)
+  chapterId     String
+  chapter       Chapter           @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  // Relations to newly added content types
+  mediaFiles    MediaFile[] 
+  
+  contributorId String?
+  contributor   User?             @relation("ContributorTopics", fields: [contributorId], references: [id])
+  rejectReason  String?           
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  // Relations
+  assessment    Assessment?
+  progressTrack StudentProgress[]
+}
+
+model MediaFile {
+  id            String   @id @default(uuid())
+  filename      String   
+  url           String   
+  storageKey    String   
+  mimeType      String   
+  fileSize      Int     
+  uploadedAt    DateTime @default(now())
+  uploadedBy    String
+
+  //  Link each file back to a single parent topic
+  topicId       String
+  topic         Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  
+  // Optional: Add an order column if you want contributors to arrange videos sequentially
+  sortOrder     Int      @default(0) 
+}
+
+model Assessment {
+  id        String     @id @default(uuid())
+  title     String
+  topicId   String     @unique // One-to-one relationship with Topic
+  topic     Topic      @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  createdBy String
+  // Relations
+  questions Question[]
+}
+
+model Question {
+  id            String     @id @default(uuid())
+  questionText  String
+  options       String[]   
+  correctIndex  Int       
+  assessmentId  String
+  createdBy     String
+  assessment    Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+}
+
+
+//  STUDENT ASSIGNMENT, PROGRESS & CERTIFICATION
+
+
+model StudentPath {
+  id             String       @id @default(uuid())
+  studentId      String
+  student        User         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  learningPathId String
+  learningPath   LearningPath @relation(fields: [learningPathId], references: [id], onDelete: Cascade)
+  isCompleted    Boolean      @default(false)
+  assignedAt     DateTime     @default(now())
+  completedAt    DateTime?
+
+  @@unique([studentId, learningPathId]) // Prevents double assignment
+}
+
+model StudentProgress {
+  id          String    @id @default(uuid())
+  studentId   String
+  student     User      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  topicId     String
+  topic       Topic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  isVideoDone Boolean   @default(false)
+  isQuizDone  Boolean   @default(false)
+  quizScore   Float?    
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([studentId, topicId]) 
+}
+
+model Certificate {
+  id          String   @id @default(uuid())
+  studentId   String
+  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  pathTitle   String   
+  issuedAt    DateTime @default(now())
+  secureHash  String   @unique 
+}
+
+// 🔔 IN-APP WORKFLOW NOTIFICATION SYSTEM
+
+enum NotificationType {
+  PATH_APPROVAL_REQUEST     
+  PATH_APPROVED                
+  CONTENT_APPROVAL_REQUEST  
+  PATH_PUBLISHED           
+  PATH_ASSIGNED             
+  WORKFLOW_REJECTED
+  CONTENT_APPROVED        
+}
+
+model Notification {
+  id          String           @id @default(uuid())
+  userId      String           
+  user        User             @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  type        NotificationType
+  title       String
+  message     String
+  isRead      Boolean          @default(false)
+  referenceId String?          
+  createdAt   DateTime         @default(now())
+}

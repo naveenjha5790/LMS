@@ -3,7 +3,10 @@ const express=require('express');
 const app=express();
 const cors=require('cors');
 const port=process.env.PORT || 5000;
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173', // Allow only your frontend origin
+  credentials: true                // Allow cookies and authorization headers
+}));
 const errorHandlerMiddleware=require('./Middleware/error-handler');
 const notFoundMiddleware=require('./Middleware/not-found');
 const path=require('path');

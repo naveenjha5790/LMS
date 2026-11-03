@@ -63,7 +63,7 @@ const uploadLocalVideo=async (req,res)=>{
         if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
         throw new NotFoundError("Associated learning path structural mapping missing");
     }
-       if (learningPath1.status !== 'STRUCTURE_APPROVED' || learningPath1.status!=='PENDING_FINAL_APPROVAL') {
+       if (learningPath1.status !== 'STRUCTURE_APPROVED' && learningPath1.status!=='PENDING_FINAL_APPROVAL') {
         if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
     
         return res.status(403).json({
@@ -116,6 +116,9 @@ const getVideos=async (req,res)=>{
         throw new NotFoundError("Topic with the given ID does not exist")
     };
     const videos = await prisma.mediaFile.findMany({
+        where:{
+            topicId:topicId
+        },
       orderBy: { sortOrder: 'asc' }
     });
     return res.status(200).json({ success: true, data: videos });

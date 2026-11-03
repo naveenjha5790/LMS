@@ -36,6 +36,14 @@ const showSubjects=async (req,res)=>{
         limit=5,
         page=1
     }=req.query;
+    const path=await prisma.learningPath.findUnique({
+        where:{
+            id:pathId
+        }
+    })
+    if (req.user.role==='CONTRIBUTOR' && (path.status==='DRAFT' || path.status==='PENDING_STRUCTURE_APPROVAL')){
+        throw new BadRequestError('You are not allowed to access before structure is being approved.')
+    }
      let filters={
         learningPathId:pathId
     }

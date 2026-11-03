@@ -32,6 +32,7 @@ const listTopics=async (req,res)=>{
      const chapterId=req.params.chId;
      const {
         title,
+        status,
         search,
         limit=5,
         page=1
@@ -41,16 +42,35 @@ const listTopics=async (req,res)=>{
     }
     if (title) filters.title=title;
 
-    if (search) {
-        filters.AND = [
-            { chapterId: chapterId },
-            {
-                OR: [
-                    { title: { contains: search, mode: 'insensitive' } }
-                ]
-            }
-        ];
-    }
+    if (req.user && req.user.role === 'contributor') {
+            filters.AND = [
+                ...(filters.AND || []),
+                {
+                    chapter: {
+                        subject: {
+                            learningPath: {
+                                status: {
+                                    notIn: ['DRAFT', 'PENDING_STRUCTURE_APPROVAL']
+                                }
+                            }
+                        }
+                    }
+                }
+            ];
+        }
+
+        if (search) {
+            filters.AND = [
+                ...(filters.AND || []),
+                {
+                    OR: [
+                        { title: { contains: search, mode: 'insensitive' } },
+                        { status: { contains: search, mode: 'insensitive' } } // Topic status check
+                    ]
+                }
+            ];
+        }
+
     const pageNum=Math.max(1,parseInt(page));
     const limNum=Math.max(1,parseInt(limit));
     const skipSum=(pageNum-1)*limNum;
@@ -299,12 +319,25 @@ async function checkAndAutoPublishPath(pathId) {
     return { pathPublished: false };
 }
 const pendingTopic=async (req,res)=>{
-    const pathPending=await prisma.Topic.findMany({
-        where:{
-            status:{in:['PENDING_CONTENT_APPROVAL']}
-        }
-    })
-    return res.json(pathPending)
+    const pendingTopics = await prisma.Topic.findMany({
+            where: {
+                status: {
+                    in: ['PENDING_CONTENT_APPROVAL']
+                }
+            },
+            include: {
+                chapter: {
+                    include: {
+                        subject: {
+                            include: {
+                                learningPath: true 
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    return res.json(pendingTopics)
 }
 module.exports={
     createTopic,

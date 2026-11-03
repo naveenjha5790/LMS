@@ -26,24 +26,46 @@ const listPaths=async (req,res)=>{
         page=1,
         limit=5
     }=req.query;
-    let filters={}
-    if (title) filters.title=title;
-    if (status) filters.status=status;
+    let filters = {};
+        
+        if (title) filters.title = title;
+        if (status) filters.status = status;
+     if (req.user && req.user.role === 'contributor') {
+            filters.AND = [
+                ...(filters.AND || []),
+                {
+                    status: {
+                        notIn: ['DRAFT', 'PENDING_STRUCTURE_APPROVAL']
+                    }
+                }
+            ];
+        }
 
-    if (search){
-        filters.OR=[
-            {title:{contains:search,
-                mode:'insensitive'
-            }},
-            {status:{
-                contains:search,
-                mode:'insensitive'
-            }}
-        ]
-    }
+        if (search) {
+            filters.AND = [
+                ...(filters.AND || []),
+                {
+                    OR: [
+                        {
+                            title: {
+                                contains: search,
+                                mode: 'insensitive'
+                            }
+                        },
+                        {
+                            status: {
+                                contains: search,
+                                mode: 'insensitive'
+                            }
+                        }
+                    ]
+                }
+            ];
+        }
     const pageNum=Math.max(1,parseInt(page));
     const limNum=Math.max(1,parseInt(limit));
     const skipSum=(pageNum-1)*limNum;
+
 
     const [tc,tl]=await Promise.all([
         prisma.LearningPath.count({where:filters}),
@@ -99,16 +121,25 @@ const submitStructure=async (req,res)=>{
         message:'Structure sent to moderator for approval'
     })
 }
-const pendingPaths=async (req,res)=>{
-    const pathsPending=await prisma.LearningPath.findMany({
-        where:{
-            status:{in:['PENDING_STRUCTURE_APPROVAL','PENDING_FINAL_APPROVAL']},
-            
-        },
-        include:{subjects:true}
-    })
-    return res.status(StatusCodes.OK).json(pathsPending)
-}
+const pendingPaths = async (req, res) => {
+    
+        const pathsPending = await prisma.LearningPath.findMany({
+            where: {
+                status: { 
+                    in: ['PENDING_STRUCTURE_APPROVAL', 'PENDING_FINAL_APPROVAL'] 
+                },
+            },
+            include: {
+                subjects: { 
+                    include: {
+                        chapters: true 
+                    }
+                }
+            }
+        });
+
+        return res.status(StatusCodes.OK).json(pathsPending);
+    }
 const moderatorResponse=async (req,res)=>{
     const pathId=req.params.id;
     let {action,reason}=req.body;

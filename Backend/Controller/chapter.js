@@ -40,17 +40,27 @@ const listChapters=async (req,res)=>{
         subjectId:subjectId
     }
     if (title) filters.title=title;
+    if (req.user && req.user.role === 'contributor') {
+            filters.AND = [
+                ...(filters.AND || []),
+                {
+                    subject: {
+                        learningPath: {
+                            status: {
+                                notIn: ['DRAFT', 'PENDING_STRUCTURE_APPROVAL']
+                            }
+                        }
+                    }
+                }
+            ];
+        }
 
     if (search) {
-        filters.AND = [
-            { subjectId: subjectId },
-            {
-                OR: [
-                    { title: { contains: search, mode: 'insensitive' } }
-                ]
-            }
-        ];
-    }
+            filters.AND = [
+                ...(filters.AND || []),
+                { title: { contains: search, mode: 'insensitive' } }
+            ];
+        }
     const pageNum=Math.max(1,parseInt(page));
     const limNum=Math.max(1,parseInt(limit));
     const skipSum=(pageNum-1)*limNum;

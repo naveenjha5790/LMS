@@ -30,7 +30,7 @@ const listPaths=async (req,res)=>{
         
         if (title) filters.title = title;
         if (status) filters.status = status;
-     if (req.user && req.user.role === 'contributor') {
+     if (req.user && req.user.role === 'CONTRIBUTOR') {
             filters.AND = [
                 ...(filters.AND || []),
                 {

@@ -42,7 +42,7 @@ const listTopics=async (req,res)=>{
     }
     if (title) filters.title=title;
 
-    if (req.user && req.user.role === 'contributor') {
+    if (req.user && req.user.role === 'CONTRIBUTOR') {
             filters.AND = [
                 ...(filters.AND || []),
                 {

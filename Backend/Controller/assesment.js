@@ -28,51 +28,58 @@ const createAssesment=async (req,res)=>{
     });
     return res.status(StatusCodes.CREATED).json(newAssesment)
 }
-const listAssesment=async (req,res)=>{
-     const topicId=req.params.tid;
-     const {
-        title,
-        search,
-        limit=5,
-        page=1
-    }=req.query;
-    
-    let filters={
-        topicId:topicId
-    }
-    if (title) filters.title=title;
+const listAssesment = async (req, res, next) => {
+    const topicId = req.params.tid;
+    const { title, search, limit = 5, page = 1 } = req.query;
 
-    if (search){
-        filters.OR=[
-            {title:{contains:search,
-                mode:'insensitive'
-            }}
-        ]
-    }
-    const pageNum=Math.max(1,parseInt(page));
-    const limNum=Math.max(1,parseInt(limit));
-    const skipSum=(pageNum-1)*limNum;
+    const pageNum = Math.max(1, parseInt(page));
+    const limNum = Math.max(1, parseInt(limit));
+    const skipSum = (pageNum - 1) * limNum;
 
-    const [ch,tch]=await Promise.all([
-        prisma.Assessment.count({where:filters}),
-        prisma.Assessment.findMany({
-            where:filters,
-            skip:skipSum,
-            take:limNum,
-            
-        })
-    ]);
-    return res.json({
-        meta:{
-            total_records:ch,
-            current_page:pageNum,
-            limit:limNum,
-            total_pages:Math.ceil(ch/limNum)
-        },
-        paths:tch
-        }
-    )
-}
+    let filters = {
+        topicId: topicId
+    };
+
+    if (title) filters.title = title;
+
+    if (search?.trim()) {
+        filters.AND = [
+            {
+                title: {
+                    contains: search.trim(),
+                    mode: 'insensitive'
+                }
+            }
+        ];
+    }
+
+    try {
+        const [ch, tch] = await Promise.all([
+            prisma.Assessment.count({ where: filters }),
+            prisma.Assessment.findMany({
+                where: filters,
+                skip: skipSum,
+                take: limNum,
+                orderBy: {
+                    title: 'asc' 
+                }
+            })
+        ]);
+
+        return res.status(200).json({
+            meta: {
+                total_records: ch,
+                current_page: pageNum,
+                limit: limNum,
+                total_pages: Math.ceil(ch / limNum)
+            },
+            paths: tch
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 const updateAssesment=async (req,res)=>{
     const assessmentId=req.params.aId;
         const {title}=req.body;

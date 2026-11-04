@@ -10,6 +10,7 @@ import Pagination from 'react-bootstrap/Pagination';
 import Badge from 'react-bootstrap/Badge';
 import { useNavigate } from "react-router-dom";
 import SubmitStructureButton from "./submitStructure";
+import AssignPathModal from "../assignment/assignPath";
 
 export default function ListPaths({ curUser, paths, setPaths, onPathSelect }) {
     const [loading, setLoading] = React.useState(false);
@@ -52,7 +53,7 @@ export default function ListPaths({ curUser, paths, setPaths, onPathSelect }) {
                 throw new Error(data.error || data.message || "Failed to fetch learning paths");
             }
 
-            // Update data structures safely
+
             setPaths(data.paths || []);
             setMeta({
                 totalRecords: data.meta?.total_records || 0,
@@ -70,12 +71,12 @@ export default function ListPaths({ curUser, paths, setPaths, onPathSelect }) {
         }
     };
 
-    // 2. FIXED: Clean effect that ONLY triggers on clear layout shifts
+
     React.useEffect(() => {
         if (curUser) {
             executeFetch(currentPage, statusFilter, search);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+
     }, [curUser, currentPage, statusFilter]); 
 
     const handleSearchSubmit = (e) => {
@@ -108,7 +109,7 @@ const refreshPathCatalogData = async () => {
     });
     const freshData = await response.json();
     
-    // Extract array rows cleanly matching your backend layout payload keys
+
     setPaths(Array.isArray(freshData) ? freshData : freshData.paths || []);
   } catch (err) {
     console.error("Failed to auto-refresh canvas workspace entries:", err);
@@ -146,12 +147,12 @@ const refreshPathCatalogData = async () => {
         <div style={{ 
             display: 'flex', 
             flexDirection: 'row', 
-            justifyContent: 'flex-start', // Keeps everything packed tightly to the left
+            justifyContent: 'flex-start', 
             alignItems: 'center', 
-            gap: '16px', // Controls the exact horizontal space between elements
+            gap: '16px',
             flexWrap: 'wrap' 
         }}>
-            <div style={{ width: '300px' }}> {/* Locked to a clean, fixed search width */}
+            <div style={{ width: '300px' }}>
                 <Form.Control
                     type="text"
                     placeholder="Search by title..."
@@ -161,7 +162,7 @@ const refreshPathCatalogData = async () => {
                 />
             </div>
             
-            <div style={{ width: '220px' }}> {/* Locked to a clean, fixed dropdown width */}
+            <div style={{ width: '220px' }}> 
                 <Form.Select 
                     value={statusFilter} 
                     onChange={(e) => {
@@ -192,7 +193,7 @@ const refreshPathCatalogData = async () => {
                     variant="outline-secondary" 
                     type="button"
                     disabled={loading}
-                    onClick={() => handlePageChange(currentPage)} // Forces a live re-fetch of your active page data
+                    onClick={() => handlePageChange(currentPage)} 
                     style={{ height: '42px', padding: '0 20px', fontWeight: '600', whiteSpace: 'nowrap', backgroundColor: '#ffffff' }}
                 >
                     🔄 Sync Dashboard
@@ -245,7 +246,7 @@ const refreshPathCatalogData = async () => {
                                 {getStatusBadge(path.status)}
                             </td>
                             <td style={{ padding: "20px" }}>
-      {/* INJECT THE ISOLATED BUTTON COMPONENT HERE */}
+
                 <SubmitStructureButton 
         pathId={path.id}
         status={path.status}
@@ -282,6 +283,12 @@ const refreshPathCatalogData = async () => {
                                             + Add Subject
                                         </Button>
                                     )}
+                                    {isManager && path.status === "PUBLISHED" && (
+            <AssignPathModal 
+                pathItem={path} 
+                onSuccess={(msg) => setAlertMessage({ type: "success", text: msg })}
+            />
+        )}
                                 </div>
                             </td>
                         </tr>

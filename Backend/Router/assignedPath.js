@@ -12,5 +12,5 @@ const {
     showAssignments
 }=require('../Controller/assignedPath');
 router.route('/:id/assign').post(authenticateUser,authorizeManager,assignPath);
-router.route('/assignedPaths').get(authenticateUser,authorizeManager,showAssignments);
+router.route('/assignedPaths').get(authenticateUser,showAssignments);
 module.exports=router;

@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Table, Button, Spinner, Alert, Modal, Form } from "react-bootstrap";
 
 /**
- * PendingTopicsApproval displays and processes topic contents awaiting review.
- * Maps cleanly to pendingTopic and moderatorTopicResponse backend controllers.
+ * 
  * 
  * @param {Function} onSetGlobalAlert - Bubbles notification messages up to the main dashboard container
  */
@@ -13,10 +12,10 @@ export default function PendingTopicsApproval({ onSetGlobalAlert }) {
   const [loading, setLoading] = useState(false);
   const [processingId, setProcessingId] = useState(null);
 
-  // Alert Tracking Context State
+
   const [alert, setAlert] = useState({ type: "", text: "" });
 
-  // Rejection Workflow State Trackers
+
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [activeTopicId, setActiveTopicId] = useState(null);
   const [reasonText, setReasonText] = useState("");
@@ -26,8 +25,7 @@ export default function PendingTopicsApproval({ onSetGlobalAlert }) {
     setAlert({ type: "", text: "" });
     try {
       const token = localStorage.getItem("token");
-      // Mapped directly to your Express route: app.get('/api/moderator/pending-topics', pendingTopic)
-      const res = await fetch("http://localhost:5000/api/pendingTopics", {
+            const res = await fetch("http://localhost:5000/api/pendingTopics", {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -53,6 +51,17 @@ export default function PendingTopicsApproval({ onSetGlobalAlert }) {
       fetchPendingTopics();
     }
   }, [showPanel]);
+  useEffect(() => {
+  if (alert.text) {
+  
+    const timer = setTimeout(() => {
+      setAlert({ type: "", text: "" });
+    }, 4000);
+
+
+    return () => clearTimeout(timer);
+  }
+}, [alert.text]);
 
   const handleTopicAction = async (topicId, actionType, textPayload = "") => {
     setProcessingId(topicId);
@@ -60,7 +69,7 @@ export default function PendingTopicsApproval({ onSetGlobalAlert }) {
 
     try {
       const token = localStorage.getItem("token");
-      // Maps directly to route: app.post('/api/moderator/topic-response/:tid', moderatorTopicResponse)
+
       const res = await fetch(`http://localhost:5000/api/${topicId}/response`, {
         method: "PATCH",
         headers: {
@@ -68,7 +77,7 @@ export default function PendingTopicsApproval({ onSetGlobalAlert }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          action: actionType, // 'approved' or 'reject'
+          action: actionType,
           reason: textPayload,
         }),
       });
@@ -79,8 +88,7 @@ export default function PendingTopicsApproval({ onSetGlobalAlert }) {
         const customMessage = data.message || "Topic workflow updated successfully.";
         setAlert({ type: "success", text: customMessage });
         if (onSetGlobalAlert) onSetGlobalAlert({ type: "success", text: customMessage });
-        
-        // Remove processed topic row from current live workspace view matrix
+
         setPendingList((prev) => prev.filter((t) => t.id !== topicId));
       } else {
         setAlert({ type: "danger", text: data.message || "Action request rejected by server." });
@@ -107,7 +115,7 @@ export default function PendingTopicsApproval({ onSetGlobalAlert }) {
   };
   return (
   <div className="mb-4">
-    {/* Action Toggle Button */}
+
     <Button 
       variant={showPanel ? "secondary" : "info"}
       onClick={() => { setShowPanel(!showPanel); setAlert({ type: "", text: "" }); }}
@@ -123,7 +131,6 @@ export default function PendingTopicsApproval({ onSetGlobalAlert }) {
       </Alert>
     )}
 
-    {/* Expanded Table Review Panel Workspace View Layer */}
     {showPanel && (
       <div 
         className="mt-3"
@@ -171,19 +178,18 @@ export default function PendingTopicsApproval({ onSetGlobalAlert }) {
                     onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#f8fafc"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
                   >
-                    {/* Left Track Cell Block: Render Context Breadcrumb details */}
+                  
                     <td className="ps-4 py-3.5">
                       <div className="text-primary fw-semibold" style={{ fontSize: "12px" }}>{pathTitle}</div>
                       <div className="text-secondary text-[11px] mt-0.5">📚 {subjectTitle} ➔ 📖 {chapterTitle}</div>
                     </td>
 
-                    {/* Middle Track Cell Block: Topic Node Identification */}
+             
                     <td className="py-3.5">
                       <div style={{ fontWeight: "600", color: "#0f172a", fontSize: "14px" }}>🔹 {topic.title}</div>
                       <small className="text-muted font-mono text-[10px]">ID: {topic.id}</small>
                     </td>
 
-                    {/* Right Action Control Track Cell Block */}
                     <td className="pe-4 py-3.5">
                       <div className="d-flex gap-2 justify-content-center">
                         <Button
@@ -215,7 +221,7 @@ export default function PendingTopicsApproval({ onSetGlobalAlert }) {
       </div>
     )}
 
-    {/* REJECTION COMMENT DESCRIPTION CAPTURE DIALOG BOX */}
+
     <Modal show={showRejectModal} onHide={() => setShowRejectModal(false)} centered size="sm">
       <Modal.Header closeButton className="bg-light">
         <Modal.Title className="fw-bold text-dark text-xs">⚠️ Content Rejection Reason</Modal.Title>

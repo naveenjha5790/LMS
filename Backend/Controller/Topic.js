@@ -200,15 +200,102 @@ const requestTopicApproval=async (req,res)=>{
         })
 }
 
+const moderatorTopicResponse = async (req, res) => {
+  const topicId = req.params.tid;
+  const { action, reason } = req.body;
 
-const moderatorTopicResponse=async (req,res)=>{
-    
+  const topic = await prisma.Topic.findUnique({
+    where: { id: topicId },
+    include: { chapter: { include: { subject: true } } }
+  });
+
+  if (!topic) {
+    throw new NotFoundError("There is no topic with provided topic id");
+  }
+
+  const pathId = topic.chapter.subject.learningPathId;
+
+  if (action === 'reject') {
+    if (!reason || reason.trim() === "") {
+      throw new BadRequestError("A rejected request must have a reason as well.");
+    }
+
+    const rejectedTopic = await prisma.Topic.update({
+      where: { id: topicId },
+      data: { status: 'REJECTED', rejectReason: reason }
+    });
+
+    await prisma.Notification.create({
+      data: {
+        userId: topic.contributorId, 
+        type: 'WORKFLOW_REJECTED',
+        title: `Topic Content Rejected`,
+        message: `Your content for topic "${topic.title}" was rejected. Reason: ${reason}`,
+        referenceId: topicId
+      }
+    });
+
+    return res.status(StatusCodes.OK).json({ message: "Your request has been rejected" });
+  }
+
+  if (action === 'approved') {
+    const approvedTopic = await prisma.Topic.update({
+      where: { id: topicId },
+      data: { status: 'APPROVED' }
+    });
+
+    await prisma.Notification.create({
+      data: {
+        userId: topic.contributorId,
+        type: 'CONTENT_APPROVED',
+        title: "Content Approved",
+        message: `Congratulations!. Your topic content with id ${topicId} has been approved`,
+        referenceId: topicId
+      }
+    });
+    const autoPublishResult = await checkAndAutoPublishPath(pathId, topicId);
+
+    return res.status(StatusCodes.OK).json({
+      message: autoPublishResult.pathPublished
+        ? "Topic approved. All topics are now complete—Learning Path has been automatically PUBLISHED! 🚀"
+        : "Topic content approved successfully. Waiting for remaining topics to clear.",
+      approvedTopic
+    });
+  }
+};
+
+async function checkAndAutoPublishPath(pathId, currentApprovedTopicId) {
+  const allPathTopics = await prisma.Topic.findMany({
+    where: { chapter: { subject: { learningPathId: pathId } } },
+    select: { id: true, status: true }
+  });
+
+  const totalTopicsCount = allPathTopics.length;
+  const approvedTopicsCount = allPathTopics.filter(t => 
+    t.status === 'APPROVED' || t.id === currentApprovedTopicId
+  ).length;
+
+  if (totalTopicsCount > 0 && approvedTopicsCount === totalTopicsCount) {
+    const publishedPath = await prisma.LearningPath.update({
+      where: { id: pathId },
+      data: { status: 'PUBLISHED', rejectReason: null }
+    });
+
+    await prisma.Notification.create({
+      data: {
+        userId: publishedPath.managerId,
+        type: 'PATH_PUBLISHED',
+        title: 'Course Path Automatically Published! 🚀',
+        message: `Congratulations! All topics under "${publishedPath.title}" were approved. The path is now live for students.`,
+        referenceId: pathId
+      }
+    });
+
+    return { pathPublished: true };
+  }
+
+  return { pathPublished: false };
 }
-
-async function checkAndAutoPublishPath(pathId) {
-}
-
-
 
 const pendingTopic=async (req,res)=>{
     const pendingTopics = await prisma.Topic.findMany({
@@ -231,6 +318,10 @@ const pendingTopic=async (req,res)=>{
         });
     return res.json(pendingTopics)
 }
+
+
+
+
 module.exports={
     createTopic,
     listTopics,

@@ -36,38 +36,87 @@ const assignPath=async (req,res)=>{
     })
     return res.status(StatusCodes.CREATED).json(newAssignment)
 }
-const showAssignments=async (req,res)=>{
-    const {
-        search,
-        limit=5,
-        page=1
-    }=req.query;
-    
-    const pageNum=Math.max(1,parseInt(page));
-    const limNum=Math.max(1,parseInt(limit));
-    const skipSum=(pageNum-1)*limNum;
+const showAssignments = async (req, res, next) => {
 
-    const [ch,tch]=await Promise.all([
-        prisma.StudentPath.count({where:filters}),
-        prisma.StudentPath.findMany({
-            skip:skipSum,
-            take:limNum,
-            orderBy:{
-                assignedAt:'desc'
-            }
-        })
-    ]);
-    return res.json({
-        meta:{
-            total_records:ch,
-            current_page:pageNum,
-            limit:limNum,
-            total_pages:Math.ceil(ch/limNum)
-        },
-        paths:tch
+    const { search, limit = 5, page = 1 } = req.query;
+    
+    const pageNum = Math.max(1, parseInt(page));
+    const limNum = Math.max(1, parseInt(limit));
+    const skipSum = (pageNum - 1) * limNum;
+    let filters = {};
+
+    const role = req.user.role?.toUpperCase();
+    if (role === "STUDENT") {
+   
+        filters.studentId = req.user.id;
+    } else if (role !== "LMS_MANAGER" && role !== "ADMIN") {
+        return res.status(403).json({ message: "Access Denied: Insufficient workspace rights." });
+    }
+
+    if (search?.trim()) {
+        const searchFilter = {
+            OR: [
+                {
+                    student: {
+                        email: { contains: search.trim(), mode: 'insensitive' }
+                    }
+                },
+                {
+                    learningPath: {
+                        title: { contains: search.trim(), mode: 'insensitive' }
+                    }
+                }
+            ]
+        };
+
+        if (filters.studentId) {
+            filters = {
+                AND: [
+                    { studentId: filters.studentId },
+                    searchFilter
+                ]
+            };
+        } else {
+            filters = searchFilter;
         }
-    )
-}
+    }
+
+    try {
+        const [ch, tch] = await Promise.all([
+            prisma.studentPath.count({ where: filters }), 
+            prisma.studentPath.findMany({
+                where: filters,
+                skip: skipSum,
+                take: limNum,
+                include: {
+                    student: {
+                        select: { name: true, email: true }
+                    },
+                    learningPath: {
+                        select: { id: true, title: true, status: true }
+                    }
+                },
+                orderBy: {
+                    assignedAt: 'desc'
+                }
+            })
+        ]);
+
+        return res.status(200).json({
+            meta: {
+                total_records: ch,
+                current_page: pageNum,
+                limit: limNum,
+                total_pages: Math.ceil(ch / limNum)
+            },
+            paths: tch 
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
 module.exports={
     assignPath,
     showAssignments

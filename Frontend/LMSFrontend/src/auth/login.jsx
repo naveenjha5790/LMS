@@ -1,6 +1,6 @@
 import React from "react";
 import { Alert, Button, Form } from "react-bootstrap";
-import { useNavigate } from "react-router-dom"; // IMPORTED: Required for component redirection hooks
+import { useNavigate } from "react-router-dom"; 
 
 export default function Login({ setUsers }) {
     const [alertMessage, setAlertMessage] = React.useState({
@@ -51,7 +51,8 @@ export default function Login({ setUsers }) {
                 throw new Error(data.msg || data.message || "Invalid Credentials");
             }
 
-        
+            let finalizedUser = null;
+
             if (data.token) {
                 localStorage.setItem("token", data.token);
                 
@@ -62,29 +63,32 @@ export default function Login({ setUsers }) {
                         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
                         const decodedUser = JSON.parse(window.atob(base64));
                         
-                        setUsers({
+                        finalizedUser = {
                             id: decodedUser.id || decodedUser.sub || data.user?.id || "",
                             email: decodedUser.email || data.user?.email || newLogin.email,
                             role: decodedUser.role || data.user?.role || "LMS_MANAGER" 
-                        });
+                        };
                     }
                 } catch (decodeError) {
-                    console.warn("Could not parse explicit token properties structure payload, fallback to data mapping profile:", decodeError);
+                    console.warn("Could not parse explicit token payload structure, falling back:", decodeError);
                     const backendUser = data.user || data;
-                    setUsers({
+                    finalizedUser = {
                         id: backendUser.id || backendUser._id,
                         email: backendUser.email || newLogin.email,
                         role: backendUser.role || "LMS_MANAGER"
-                    });
+                    };
                 }
             } else {
                 const backendUser = data.user || data;
-                setUsers({
+                finalizedUser = {
                     id: backendUser.id || backendUser._id,
                     email: backendUser.email || newLogin.email,
                     role: backendUser.role || "LMS_MANAGER"
-                });
+                };
             }
+
+
+            setUsers(finalizedUser);
 
             setNewLogin({
                 email: "",
@@ -96,28 +100,15 @@ export default function Login({ setUsers }) {
                 text: "Successfully logged in"
             });
 
-            navigate("/getPaths");
-    <div style={{ 
-                textAlign: 'center', 
-                borderTop: '1px solid #f1f5f9', 
-                paddingTop: '20px',
-                fontSize: '15px',
-                color: '#64748b',
-                fontWeight: '500'
-            }}>
-                First time using LMS?{' '}
-                <span 
-                    onClick={() => navigate("/signup")} 
-                    style={{ 
-                        color: '#0d6efd', 
-                        textDecoration: 'underline', 
-                        cursor: 'pointer',
-                        fontWeight: '700'
-                    }}
-                >
-                    Create an Account
-                </span>
-            </div>
+
+            const role = finalizedUser.role ? finalizedUser.role.toUpperCase() : "";
+            if (role === "MODERATOR") {
+                navigate("/moderatorDashboard", { replace: true });
+            }else if (role === "STUDENT") {
+    navigate("/studentDashboard", { replace: true }); 
+            }else {
+                navigate("/getPaths", { replace: true });
+            }
         
         } catch (error) {
             setAlertMessage({
@@ -128,6 +119,7 @@ export default function Login({ setUsers }) {
             setIsLogin(false);
         }
     }
+
 
     return (
     <div style={{ 

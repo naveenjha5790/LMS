@@ -5,17 +5,16 @@ export default function ModeratorDashboard() {
   const [showPending, setShowPending] = useState(false);
   const [pendingList, setPendingList] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [actionLoading, setActionLoading] = useState(null); // Track specific path processing
+  const [actionLoading, setActionLoading] = useState(null); 
 
-  // Alerts System
+
   const [alert, setAlert] = useState({ type: "", text: "" });
 
-  // Rejection Modal Tracking States
+ 
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [activePathId, setActivePathId] = useState(null);
   const [rejectReason, setRejectReason] = useState("");
 
-  // 1. Fetch paths using your pendingPaths backend controller
   const fetchPendingPaths = async () => {
     setLoading(true);
     setAlert({ type: "", text: "" });
@@ -42,28 +41,39 @@ export default function ModeratorDashboard() {
     }
   };
 
-  // Trigger loading automatically when toggled open
+
   useEffect(() => {
     if (showPending) {
       fetchPendingPaths();
     }
   }, [showPending]);
+  useEffect(() => {
+  if (alert.text) {
+    
+    const timer = setTimeout(() => {
+      setAlert({ type: "", text: "" });
+    }, 4000);
 
-  // 2. Submit responses to your moderatorResponse backend controller
+
+    return () => clearTimeout(timer);
+  }
+}, [alert.text]);
+
+
   const handleModeratorAction = async (pathId, actionType, reasonText = "") => {
     setActionLoading(pathId);
     setAlert({ type: "", text: "" });
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:5000/api/paths/r${pathId}/approvalPending`, {
-        method: "POST",
+      const res = await fetch(`http://localhost:5000/api/paths/${pathId}/approvalPending`, {
+        method: "PATCH",
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          action: actionType, // 'approved' or 'reject'
+          action: actionType, 
           reason: reasonText,
         }),
       });
@@ -72,7 +82,7 @@ export default function ModeratorDashboard() {
 
       if (res.ok) {
         setAlert({ type: "success", text: data.message || "Action updated successfully!" });
-        // Hot-remove item from current list immediately upon action resolution
+
         setPendingList((prev) => prev.filter((item) => item.id !== pathId));
       } else {
         setAlert({ type: "danger", text: data.message || "Server rejected this action." });
@@ -100,12 +110,11 @@ export default function ModeratorDashboard() {
 
   return (
   <div className="container mt-4">
-    {/* Header Action Banner */}
+
     <div className="bg-light p-4 rounded-3 border mb-4 shadow-sm">
       <h2 className="fw-bold text-dark mb-3">Moderator Workspace Dashboard</h2>
       <p className="text-muted small">Review incoming curriculum schemas and final releases submitted by workspace managers and content contributors.</p>
-      
-      {/* Layout Control Triggers Grid Row */}
+
       <div className="d-flex flex-wrap gap-3">
         <Button 
           variant={showPending ? "secondary" : "warning"}
@@ -115,7 +124,6 @@ export default function ModeratorDashboard() {
           {showPending ? "📁 Hide Pending Pathways" : "🔍 View Pending Pathways"}
         </Button>
 
-        {/* ─── INJECTED: INDEPENDENT TOPIC APPROVAL ACTIONS TRIGGER ─── */}
         <PendingTopicsApproval onSetGlobalAlert={(alertObj) => setAlert(alertObj)} />
       </div>
     </div>
@@ -126,7 +134,6 @@ export default function ModeratorDashboard() {
       </Alert>
     )}
 
-    {/* Expanded Review Screen Layer for Learning Paths Structure */}
     {showPending && (
       <div className="bg-white p-3 border rounded-3 shadow-sm mb-4">
         <h4 className="fw-bold text-secondary mb-3 small uppercase tracking-wider">Awaiting Structural Integrity Check:</h4>
@@ -262,7 +269,7 @@ export default function ModeratorDashboard() {
       </div>
     )}
 
-    {/* SUB-MODAL INTERFACE FOR INJECTING CUSTOM REJECTION REASONS */}
+
     <Modal show={showRejectModal} onHide={() => setShowRejectModal(false)} centered size="sm">
       <Modal.Header closeButton className="bg-light">
         <Modal.Title className="fw-bold text-dark text-xs">⚠️ Rejection Context Reason</Modal.Title>

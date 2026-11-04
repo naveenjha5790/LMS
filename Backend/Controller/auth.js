@@ -154,7 +154,7 @@ const listStudent=async (req,res)=>{
     const limit=5;
     const skip=(page -1)*limit;
 
-    const [totalUsers,users]=await Promise.all([
+    const [totalStudents,students]=await Promise.all([
         prisma.user.count(),
         prisma.user.findMany({
             skip: skip,
@@ -173,23 +173,26 @@ const listStudent=async (req,res)=>{
                 }
         })
     ])
-    const totalPages = Math.ceil(totalUsers / limit);
+    const totalPages = Math.ceil(totalStudents / limit);
     return res.status(StatusCodes.OK).json({
-            users,
+            students,
             pagination: {
                 currentPage: page,
                 totalPages,
-                totalUsers,
+                totalStudents,
                 limit
             }
         });
 }
 const changeRole=async (req,res)=>{
     const {email, newRole}=req.body;
-    const allowedRoles=['LMS_MANAGER','CONTRIBUTOR','MODERATOR']
+    const allowedRoles=['LMS_MANAGER','CONTRIBUTOR','MODERATOR','STUDENT']
     if (!allowedRoles.includes(newRole)){
         throw new NotFoundError('Please provide a valid value')
     }
+    if (req.user?.email === email && newRole?.toUpperCase() !== 'ADMIN') {
+            return res.status(400).json({ message: 'Operational Block: You cannot modify or downgrade your own active Admin status profile.' });
+        }
      const updatedUser=await prisma.user.update({
             where :{email:email},
             data:{role:newRole}

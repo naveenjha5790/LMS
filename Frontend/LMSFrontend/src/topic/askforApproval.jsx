@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { Button, Spinner } from "react-bootstrap";
 
 /**
- * SubmitTopicContentButton handles the topic content approval submission lifecycle.
- * Maps cleanly to your backend requestTopicApproval Express controller (req.params.tid).
+ *
  * 
  * @param {String} topicId - The target unique Topic ID reference (req.params.tid)
  * @param {String} currentStatus - The current status string of the topic node (e.g., 'DRAFT_CONTENT')
@@ -20,17 +19,16 @@ export default function SubmitTopicContentButton({
 }) {
   const [submitting, setSubmitting] = useState(false);
 
-  // 1. Role validation layer: Restricts visibility exclusively to your content contributors
+
   const isContributor = curUser?.role?.toUpperCase() === "CONTRIBUTOR";
-  
-  // Natively matches your content progression workflow: only allows submission if status is in local draft state
+
   const isEligibleStatus = currentStatus === "DRAFT_CONTENT" || currentStatus === "DRAFT";
 
-  // Hide the element entirely from the UI tree if constraints aren't cleanly met
+
   if (!isContributor || !isEligibleStatus) return null;
 
   const handleContentSubmission = async (e) => {
-    // Stop click events bubbling up to prevent expanding/collapsing accordion panels unintentionally
+
     e.stopPropagation();
 
     setSubmitting(true);
@@ -38,8 +36,7 @@ export default function SubmitTopicContentButton({
 
     try {
       const token = localStorage.getItem("token");
-      
-      // Calls your precise topic approval submission target string parameter routing rule
+
       const response = await fetch(`http://localhost:5000/api/${topicId}/approvalRequest`, {
         method: "PATCH",
         headers: {
@@ -57,10 +54,10 @@ export default function SubmitTopicContentButton({
             text: data.message || "Content successfully sent to moderator for approval!" 
           });
         }
-        // Force an execution loop refresh inside parent container to toggle badge statuses live
+    
         if (onRefreshTopics) onRefreshTopics();
       } else {
-        // Correctly exposes specific business rules exceptions (e.g., "Can not send content for approval without video and quiz")
+       
         if (onSetAlert) {
           onSetAlert({ 
             type: "danger", 

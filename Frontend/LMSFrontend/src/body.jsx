@@ -10,6 +10,9 @@ import ShowSubjects from "./subjects/listSubjects";
 import CreateSubject from "./subjects/createSubjects";
 import CreateChapter from "./chapters/createChapters";
 import ModeratorDashboard from "./learningPath.jsx/moderatorDashboard";
+import ListAssignments from "./assessment/listAssignment";
+import StudentDashboard from "./assessment/studentDashboard";
+import ManageUsersPage from "./admin/manageUser";
 export default function Body() {
     const [users, setUsers] = React.useState(null);
     const [initializing, setInitializing] = React.useState(true); 
@@ -80,7 +83,7 @@ export default function Body() {
     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         {users ? (
             <>
-                {/* Text changed to a high-contrast off-white for legibility */}
+      
                 <span style={{ color: '#f8f9fa', fontSize: '1.1rem', margin: '0 16px' }}>
                     Signed in as: <strong style={{ color: '#ffffff' }}>{users.email || users.username}</strong> ({normalizedRole})
                 </span>
@@ -108,30 +111,31 @@ export default function Body() {
     </div>
 </Navbar>
 
-            {(activePath || activeSubject) && (
-                <Alert variant="info" className="d-flex gap-3 align-items-center py-2 px-3 mb-4 small shadow-sm">
-                    {activePath && (
-                        <div>Active Workspace Path: <strong className="text-dark">{activePath.title}</strong></div>
-                    )}
-                    {activeSubject && (
-                        <div>Active Subject: <strong className="text-dark">{activeSubject.title}</strong></div>
-                    )}
-                </Alert>
-            )}
+            {!isStudent && (activePath || activeSubject) && (
+    <Alert variant="info" className="d-flex gap-3 align-items-center py-2 px-3 mb-4 small shadow-sm">
+        {activePath && (
+            <div>Active Workspace Path: <strong className="text-dark">{activePath.title}</strong></div>
+        )}
+        {activeSubject && (
+            <div>Active Subject: <strong className="text-dark">{activeSubject.title}</strong></div>
+        )}
+    </Alert>
+)}
 
-            {users && (
-    <div className="d-flex flex-wrap gap-2 mb-4 p-3 border rounded shadow-sm">
+         {users && (
+    <div className="d-flex flex-wrap gap-2 mb-4 p-3 border rounded shadow-sm bg-white">
         
-        {/* VIEW PATHS: Visible to managers and students, but hidden from Moderators */}
-        {!isModerator && !isStudent &&(
-            <Link to="/getPaths">
-                <Button variant="outline-primary" size="sm" style={{ padding: "20px", margin: "20px" }}>
-                    View Paths
+        {isStudent && (
+            <Link to="/studentDashboard">
+                <Button variant="success" size="sm" style={{ padding: "20px", margin: "20px", fontWeight: "bold" }}>
+                    🎓 Student Dashboard
                 </Button>
             </Link>
         )}
+
+
         
-        {/* CREATE PATH: Exclusively visible to Managers */}
+
         {isLMSManager && (
             <Link to="/createPath">
                 <Button variant="warning" size="sm" style={{ padding: "20px", margin: "20px" }}>
@@ -140,11 +144,35 @@ export default function Body() {
             </Link>
         )}
 
-        {/* MODERATOR DASHBOARD SHORTCUT: Exclusively visible to Moderators */}
+
+        {(isLMSManager || isStudent) && (
+            <Link to="/assignments">
+                <Button variant="info" size="sm" style={{ padding: "20px", margin: "20px", fontWeight: "bold", color: "#ffffff" }}>
+                    📝 View Assignments
+                </Button>
+            </Link>
+        )}
+
+  
         {isModerator && (
             <Link to="/moderatorDashboard">
                 <Button variant="danger" size="sm" style={{ padding: "20px", margin: "20px", fontWeight: "bold" }}>
                     🛡️ Moderator Dashboard Workspace
+                </Button>
+            </Link>
+        )}
+        {normalizedRole === 'ADMIN' && (
+            <Link to="/manageUsers">
+                <Button variant="dark" size="sm" style={{ padding: "20px", margin: "20px", fontWeight: "bold" }}>
+                    👤 Manage Users & Roles
+                </Button>
+            </Link>
+        )}
+
+        {!isModerator && (
+            <Link to="/getPaths">
+                <Button variant="outline-primary" size="sm" style={{ padding: "20px", margin: "20px" }}>
+                    View Paths
                 </Button>
             </Link>
         )}
@@ -229,13 +257,44 @@ export default function Body() {
                         ) : <Navigate to="/getPaths" replace />
                     ) : <Navigate to="/login" replace />
                 } />
+                <Route path="/assignments" element={
+                users ? <ListAssignments curUser={users} 
+                isStudent={isStudent}/> : <Navigate to="/login" replace />
+            } />
+
+            <Route path="/studentDashboard" element={
+                users && normalizedRole === 'STUDENT' 
+                    ? <StudentDashboard curUser={users} /> 
+                    : <Navigate to="/login" replace />
+            } />
                 <Route path="/moderatorDashboard" element={
                 users && normalizedRole === 'MODERATOR' 
                 ? <ModeratorDashboard /> 
         : <Navigate to="/login" replace />
         } />
+        <Route path="/manageUsers" element={
+        users && normalizedRole === 'ADMIN' 
+            ? <ManageUsersPage /> 
+            : <Navigate to="/login" replace />
+    } />
 
-                <Route path="*" element={<Navigate to={users ? "/getPaths" : "/login"} replace />} />
+                <Route 
+                path="*" 
+                element={
+                    users ? (
+                        normalizedRole === 'MODERATOR' ? (
+                            <Navigate to="/moderatorDashboard" replace />
+                        ) : normalizedRole === 'STUDENT' ? (
+                            <Navigate to="/studentDashboard" replace />
+                        ) : (
+                            <Navigate to="/getPaths" replace />
+                        )
+                    ) : (
+                        <Navigate to="/login" replace />
+                    )
+                } 
+            />
+        
             </Routes>
         </Container>
     );

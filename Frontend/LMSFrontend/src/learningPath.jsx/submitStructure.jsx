@@ -20,15 +20,13 @@ export default function SubmitStructureButton({
 }) {
   const [submitting, setSubmitting] = useState(false);
 
-  // Structural restrictions check matching your validation rules
+
   const isDraft = status?.toUpperCase() === "DRAFT";
 
-  // Hide entirely if user profile lacks manager role or status isn't clear DRAFT
   if (!isManager || !isDraft) return null;
 
   const handleStructureSubmission = async (e) => {
-    // ─── STOP EVENT PROPAGATION ───
-    // Prevents clicking this nested button from opening card details or page redirects
+
     e.stopPropagation(); 
     
     setSubmitting(true);
@@ -37,7 +35,7 @@ export default function SubmitStructureButton({
     try {
       const token = localStorage.getItem("token");
       
-      // Connects directly to backend: app.post('/api/:id/submit-structure', submitStructure)
+
       const response = await fetch(`http://localhost:5000/api/paths/${pathId}/submitStructure`, {
         method: "PATCH",
         headers: {
@@ -55,8 +53,7 @@ export default function SubmitStructureButton({
             text: data.message || "Structure sent to moderator for approval!" 
           });
         }
-        
-        // Notify parent state array to transform item status values locally
+
         if (onSubmissionSuccess) {
           onSubmissionSuccess(pathId);
         }

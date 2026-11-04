@@ -147,7 +147,7 @@ export default function Body() {
 
         {(isLMSManager || isStudent) && (
             <Link to="/assignments">
-                <Button variant="info" size="sm" style={{ padding: "20px", margin: "20px", fontWeight: "bold", color: "#ffffff" }}>
+                <Button variant="info" size="sm" style={{ padding: "20px", margin: "20px", fontWeight: "bold", color: "black" }}>
                     📝 View Assignments
                 </Button>
             </Link>
@@ -169,7 +169,7 @@ export default function Body() {
             </Link>
         )}
 
-        {!isModerator && (
+        {!isModerator && !isStudent &&(
             <Link to="/getPaths">
                 <Button variant="outline-primary" size="sm" style={{ padding: "20px", margin: "20px" }}>
                     View Paths

@@ -9,19 +9,19 @@ import Spinner from 'react-bootstrap/Spinner';
 import Pagination from 'react-bootstrap/Pagination';
 import Badge from 'react-bootstrap/Badge';
 import { useNavigate } from "react-router-dom";
+import SubmitStructureButton from "./submitStructure";
 
 export default function ListPaths({ curUser, paths, setPaths, onPathSelect }) {
     const [loading, setLoading] = React.useState(false);
     const [alertMessage, setAlertMessage] = React.useState({ type: "", text: "" });
     const [search, setSearch] = React.useState("");
     const [statusFilter, setStatusFilter] = React.useState("");
-    
+    const isManager = curUser?.role?.toUpperCase() === "LMS_MANAGER" 
     const [currentPage, setCurrentPage] = React.useState(1);
     const [meta, setMeta] = React.useState({ totalRecords: 0, totalPages: 1 });
     
     const navigate = useNavigate();
 
-    // 1. Separate your API call completely out of React state dependency tracks
     const executeFetch = async (pageNumber, currentStatus, currentSearch) => {
         if (!curUser) return;
         setLoading(true);
@@ -87,6 +87,33 @@ export default function ListPaths({ curUser, paths, setPaths, onPathSelect }) {
     const handlePageChange = (newPage) => {
         setCurrentPage(newPage);
     };
+    const handleLocalStateSuccess = (pathId) => {
+  if (setPaths) {
+    setPaths((prevPaths) =>
+      prevPaths.map((p) =>
+        p.id === pathId ? { ...p, status: "PENDING_STRUCTURE_APPROVAL", rejectReason: null } : p
+      )
+    );
+  }
+};
+const refreshPathCatalogData = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await fetch(`http://localhost:5000/api/getPaths`, { // Use your exact fetch paths endpoint
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      }
+    });
+    const freshData = await response.json();
+    
+    // Extract array rows cleanly matching your backend layout payload keys
+    setPaths(Array.isArray(freshData) ? freshData : freshData.paths || []);
+  } catch (err) {
+    console.error("Failed to auto-refresh canvas workspace entries:", err);
+  }
+};
 
     const getStatusBadge = (status) => {
         const variants = {
@@ -161,7 +188,17 @@ export default function ListPaths({ curUser, paths, setPaths, onPathSelect }) {
                 >
                     🔍 Search
                 </Button>
+                <Button 
+                    variant="outline-secondary" 
+                    type="button"
+                    disabled={loading}
+                    onClick={() => handlePageChange(currentPage)} // Forces a live re-fetch of your active page data
+                    style={{ height: '42px', padding: '0 20px', fontWeight: '600', whiteSpace: 'nowrap', backgroundColor: '#ffffff' }}
+                >
+                    🔄 Sync Dashboard
+                </Button>
             </div>
+
         </div>
     </Form>
 </div>
@@ -189,6 +226,7 @@ export default function ListPaths({ curUser, paths, setPaths, onPathSelect }) {
                 <tr>
                     <th style={{ padding: '16px' }}>Title</th>
                     <th style={{ padding: '16px' }}>Status</th>
+                    <th style={{ padding:"20px" }}>Approval</th> 
                     <th style={{ width: "260px", padding: '16px' }}>Actions</th>
                 </tr>
             </thead>
@@ -206,6 +244,17 @@ export default function ListPaths({ curUser, paths, setPaths, onPathSelect }) {
                             <td style={{ padding: '18px 16px' }}>
                                 {getStatusBadge(path.status)}
                             </td>
+                            <td style={{ padding: "20px" }}>
+      {/* INJECT THE ISOLATED BUTTON COMPONENT HERE */}
+                <SubmitStructureButton 
+        pathId={path.id}
+        status={path.status}
+        isManager={isManager}
+        onSubmissionSuccess={handleLocalStateSuccess}
+        onSetAlert={setAlertMessage}
+      />
+        </td>
+
                             <td style={{ padding: '18px 16px' }}>
                                 <div style={{ display: 'flex', gap: '12px' }}>
                                     <Button 
@@ -274,7 +323,13 @@ export default function ListPaths({ curUser, paths, setPaths, onPathSelect }) {
         No learning roadmaps found matching criteria.
     </div>
 )}
+
+
+  <Button variant="outline-primary" size="sm" className="p-2 border-0 rounded-circle text-muted hover:text-primary">
+    
+  </Button>
 </div>
+
     );
 
 }

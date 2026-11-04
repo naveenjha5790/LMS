@@ -177,7 +177,7 @@ const moderatorResponse=async (req,res)=>{
             message:"Path is rejected and reason has been provided with it"
         })
     }
-    if (action='approved'){
+    if (action==='approved'){
         let nextStatus;
         if (path.status==='PENDING_STRUCTURE_APPROVAL'){
             nextStatus='STRUCTURE_APPROVED';

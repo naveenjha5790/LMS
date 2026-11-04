@@ -9,7 +9,7 @@ import ShowChapters from "./chapters/listChapters";
 import ShowSubjects from "./subjects/listSubjects";
 import CreateSubject from "./subjects/createSubjects";
 import CreateChapter from "./chapters/createChapters";
-
+import ModeratorDashboard from "./learningPath.jsx/moderatorDashboard";
 export default function Body() {
     const [users, setUsers] = React.useState(null);
     const [initializing, setInitializing] = React.useState(true); 
@@ -58,6 +58,8 @@ export default function Body() {
 
     const normalizedRole = users?.role?.toUpperCase()?.trim() || "";
     const isLMSManager   = normalizedRole === 'LMS_MANAGER' || normalizedRole === 'MANAGER';
+    const isModerator=normalizedRole==='MODERATOR';
+    const isStudent=normalizedRole==='STUDENT';
 
         return (
         <Container className="py-4">
@@ -118,22 +120,37 @@ export default function Body() {
             )}
 
             {users && (
-                <div className="d-flex flex-wrap gap-2 mb-4 p-3 border rounded shadow-sm">
-                   
-                    <Link to="/getPaths">
-                        <Button variant="outline-primary" size="sm"
-                        style={{padding:"20px",margin:"20px"}}>View Paths</Button>
-                    </Link>
-                    
-                 
-                    {isLMSManager && (
-                        <Link to="/createPath">
-                            <Button variant="warning" size="sm"
-                            style={{padding:"20px",margin:"20px"}}>Create Path</Button>
-                        </Link>
-                    )}
-                </div>
-            )}
+    <div className="d-flex flex-wrap gap-2 mb-4 p-3 border rounded shadow-sm">
+        
+        {/* VIEW PATHS: Visible to managers and students, but hidden from Moderators */}
+        {!isModerator && !isStudent &&(
+            <Link to="/getPaths">
+                <Button variant="outline-primary" size="sm" style={{ padding: "20px", margin: "20px" }}>
+                    View Paths
+                </Button>
+            </Link>
+        )}
+        
+        {/* CREATE PATH: Exclusively visible to Managers */}
+        {isLMSManager && (
+            <Link to="/createPath">
+                <Button variant="warning" size="sm" style={{ padding: "20px", margin: "20px" }}>
+                    Create Path
+                </Button>
+            </Link>
+        )}
+
+        {/* MODERATOR DASHBOARD SHORTCUT: Exclusively visible to Moderators */}
+        {isModerator && (
+            <Link to="/moderatorDashboard">
+                <Button variant="danger" size="sm" style={{ padding: "20px", margin: "20px", fontWeight: "bold" }}>
+                    🛡️ Moderator Dashboard Workspace
+                </Button>
+            </Link>
+        )}
+    </div>
+)}
+
 
             
             <Routes>
@@ -212,6 +229,11 @@ export default function Body() {
                         ) : <Navigate to="/getPaths" replace />
                     ) : <Navigate to="/login" replace />
                 } />
+                <Route path="/moderatorDashboard" element={
+                users && normalizedRole === 'MODERATOR' 
+                ? <ModeratorDashboard /> 
+        : <Navigate to="/login" replace />
+        } />
 
                 <Route path="*" element={<Navigate to={users ? "/getPaths" : "/login"} replace />} />
             </Routes>

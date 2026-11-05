@@ -17,7 +17,7 @@ const {
     requestTopicApproval,
     pendingTopic
 }=require('../Controller/Topic');
-router.route('/:chId/topics').post(authenticateUser,authorizeManager,createTopic).get(authenticateUser,authrorizeStaff,listTopics);
+router.route('/:chId/topics').post(authenticateUser,authorizeManager,createTopic).get(authenticateUser,listTopics);
 router.route('/topics/:tId').patch(authenticateUser,authorizeManager,updateTopic).delete(authenticateUser,authorizeManager,deleteTopic)
 router.route('/:tid/response').patch(authenticateUser,authorizeModerator,moderatorTopicResponse);
 router.route('/:tid/approvalRequest').patch(authenticateUser,authrorizeContributor,requestTopicApproval);

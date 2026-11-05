@@ -12,6 +12,6 @@ const {upload,
     uploadLocalVideo,
 getVideos}=require('../Controller/videos');
 router.route('/:tid/uploadVideos').post(authenticateUser,authrorizeContributor,upload.single('videoFile'),uploadLocalVideo).get(
-    authenticateUser,authrorizeStaff,getVideos
+    authenticateUser,getVideos
 )
 module.exports=router;

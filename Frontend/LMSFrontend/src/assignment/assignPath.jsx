@@ -86,7 +86,7 @@ export default function AssignPathModal({ pathItem, onSuccess }) {
 
   return (
     <>
-     
+  
       {alert.text && (
         <Alert 
           variant={alert.type} 
@@ -98,15 +98,18 @@ export default function AssignPathModal({ pathItem, onSuccess }) {
         </Alert>
       )}
 
+
       <Button variant="success" size="sm" className="fw-semibold" onClick={openAssignModal}>
         Assign Path
       </Button>
 
+  
       <Modal show={showAssignModal} onHide={() => setShowAssignModal(false)} centered>
         <Form onSubmit={handleAssignSubmit}>
           <Modal.Header closeButton>
             <Modal.Title>Assign Learning Path</Modal.Title>
           </Modal.Header>
+          
           <Modal.Body>
             <p className="small text-muted mb-3">
               Assigning path: <strong>{pathItem?.title}</strong>
@@ -122,22 +125,21 @@ export default function AssignPathModal({ pathItem, onSuccess }) {
             ) : (
               <Form.Group>
                 <Form.Select
-  required
-  value={selectedStudentId}
-  onChange={(e) => setSelectedStudentId(e.target.value)}
->
-  <option value="">-- Choose a student from registry --</option>
-  
-
-  {Array.isArray(students) && students.map((student) => (
-    <option key={student.id} value={student.id}>
-      {student.name || student.email} ({student.email})
-    </option>
-  ))}
-</Form.Select>
+                  required
+                  value={selectedStudentId}
+                  onChange={(e) => setSelectedStudentId(e.target.value)}
+                >
+                  <option value="">-- Choose a student from registry --</option>
+                  {Array.isArray(students) && students.map((student) => (
+                    <option key={student.id || student._id} value={student.id || student._id}>
+                      {student.name || student.email} ({student.email})
+                    </option>
+                  ))}
+                </Form.Select>
               </Form.Group>
             )}
           </Modal.Body>
+
           <Modal.Footer>
             <Button variant="secondary" onClick={() => setShowAssignModal(false)} disabled={submittingAssignment}>
               Cancel

@@ -15,6 +15,6 @@ const {
     deleteAssesment
 }=require('../Controller/assesment');
 const { update } = require('list');
-router.route('/:tid/assessments').post(authenticateUser,authrorizeContributor,createAssesment).get(authenticateUser,authrorizeStaff,listAssesment);
+router.route('/:tid/assessments').post(authenticateUser,authrorizeContributor,createAssesment).get(authenticateUser,listAssesment);
 router.route('/assessments/:aid').patch(authenticateUser,authrorizeContributor,updateAssesment).delete(authenticateUser,authrorizeContributor,deleteAssesment)
 module.exports=router;

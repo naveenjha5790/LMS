@@ -41,27 +41,29 @@ const listPaths=async (req,res)=>{
             ];
         }
 
-        if (search) {
-            filters.AND = [
-                ...(filters.AND || []),
-                {
-                    OR: [
-                        {
-                            title: {
-                                contains: search,
-                                mode: 'insensitive'
-                            }
-                        },
-                        {
-                            status: {
-                                contains: search,
-                                mode: 'insensitive'
-                            }
-                        }
-                    ]
-                }
-            ];
-        }
+       const PATH_STATUSES = [
+  'DRAFT',
+  'PENDING_STRUCTURE_APPROVAL',
+  'STRUCTURE_APPROVED',
+  'PUBLISHED',
+  'REJECTED'
+];
+
+if (search && search.trim()) {
+  const term = search.trim();
+  const statusTerm = term.toUpperCase().replace(/\s+/g, '_');
+  const matchingStatuses = PATH_STATUSES.filter(s => s.includes(statusTerm));
+
+  filters.AND = [
+    ...(filters.AND || []),
+    {
+      OR: [
+        { title: { contains: term, mode: 'insensitive' } },
+        ...(matchingStatuses.length ? [{ status: { in: matchingStatuses } }] : [])
+      ]
+    }
+  ];
+}
     const pageNum=Math.max(1,parseInt(page));
     const limNum=Math.max(1,parseInt(limit));
     const skipSum=(pageNum-1)*limNum;

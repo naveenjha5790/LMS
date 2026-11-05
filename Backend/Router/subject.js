@@ -13,6 +13,6 @@ const {
     updateSubject,
     deleteSubject
 }=require('../Controller/subject');
-router.route('/:id/subject').post(authenticateUser,authorizeManager,createSubject).get(authenticateUser,authrorizeStaff,showSubjects);
+router.route('/:id/subject').post(authenticateUser,authorizeManager,createSubject).get(authenticateUser,showSubjects);
 router.route('/subjects/:subId').patch(authenticateUser,authorizeManager,updateSubject).delete(authenticateUser,authorizeManager,deleteSubject)
 module.exports=router;

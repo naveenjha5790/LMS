@@ -13,7 +13,7 @@ const {createPath,listPaths,
     moderatorResponse,
     updatePath
 }=require('../Controller/learningPath');
-router.route('/paths').get(authenticateUser,authrorizeStaff,listPaths).post(authenticateUser,authorizeManager,createPath);
+router.route('/paths').get(authenticateUser,listPaths).post(authenticateUser,authorizeManager,createPath);
 router.route('/paths/:id/submitStructure').patch(authenticateUser,authorizeManager,submitStructure);
 router.route('/paths/pending').get(authenticateUser,authorizeModerator,pendingPaths);
 router.route('/paths/:id/approvalPending').patch(authenticateUser,authorizeModerator,moderatorResponse);

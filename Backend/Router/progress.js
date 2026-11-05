@@ -12,7 +12,7 @@ const {
     quizQuestions,
     viewProgress,submitQuiz
 }=require('../Controller/progress');
-router.route('/video/:mId').get(authenticateUser,authorizeStudent,videoDone);
+router.route('/video/:mId').patch(authenticateUser,authorizeStudent,videoDone);
 router.route('/:tId/quiz').get(authenticateUser,authorizeStudent,quizQuestions).post(authenticateUser,authorizeStudent,submitQuiz);
 router.route('/progress').get(authenticateUser,viewProgress)
 module.exports=router;

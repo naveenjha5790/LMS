@@ -13,6 +13,6 @@ const {
     updateChapter,
     deleteChapter
 }=require('../Controller/chapter');
-router.route('/:subId/chapters').post(authenticateUser,authorizeManager,createChapter).get(authenticateUser,authrorizeStaff,listChapters);
+router.route('/:subId/chapters').post(authenticateUser,authorizeManager,createChapter).get(authenticateUser,listChapters);
 router.route('/chapters/:chId').patch(authenticateUser,authorizeManager,updateChapter).delete(authenticateUser,authorizeManager,deleteChapter)
 module.exports=router;

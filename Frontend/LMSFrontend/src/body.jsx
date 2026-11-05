@@ -13,6 +13,7 @@ import ModeratorDashboard from "./learningPath.jsx/moderatorDashboard";
 import ListAssignments from "./assessment/listAssignment";
 import StudentDashboard from "./assessment/studentDashboard";
 import ManageUsersPage from "./admin/manageUser";
+import NotificationWorkspace from "./notification/showNotification";
 export default function Body() {
     const [users, setUsers] = React.useState(null);
     const [initializing, setInitializing] = React.useState(true); 
@@ -63,7 +64,6 @@ export default function Body() {
     const isLMSManager   = normalizedRole === 'LMS_MANAGER' || normalizedRole === 'MANAGER';
     const isModerator=normalizedRole==='MODERATOR';
     const isStudent=normalizedRole==='STUDENT';
-
         return (
         <Container className="py-4">
           
@@ -108,6 +108,7 @@ export default function Body() {
                 </Button>
             )
         )}
+        {users && <NotificationWorkspace curUser={users} />}
     </div>
 </Navbar>
 
@@ -188,15 +189,15 @@ export default function Body() {
 
             
                 <Route path="/getPaths" element={
-                    users ? (
-                        <ListPaths 
-                            curUser={users} 
-                            setPaths={setLearningPath} 
-                            paths={learningPath} 
-                            onPathSelect={(pathItem) => setActivePath(pathItem)} 
-                        />
-                    ) : <Navigate to="/login" replace />
-                } />
+    users && !isStudent && !isModerator ? (
+        <ListPaths 
+            curUser={users} 
+            setPaths={setLearningPath} 
+            paths={learningPath} 
+            onPathSelect={(pathItem) => setActivePath(pathItem)} 
+        />
+    ) : <Navigate to="/login" replace />
+} />
                 <Route path="/createPath" element={
                     users ? (
                         <CreatePath 

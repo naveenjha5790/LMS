@@ -71,7 +71,7 @@ export default function Login({ setUsers }) {
                     }
                 } catch (decodeError) {
                     console.warn("Could not parse explicit token payload structure, falling back:", decodeError);
-                    const backendUser = data.user || data;
+                    const backendUser = data.users || data;
                     finalizedUser = {
                         id: backendUser.id || backendUser._id,
                         email: backendUser.email || newLogin.email,
@@ -79,7 +79,7 @@ export default function Login({ setUsers }) {
                     };
                 }
             } else {
-                const backendUser = data.user || data;
+                const backendUser = data.users || data;
                 finalizedUser = {
                     id: backendUser.id || backendUser._id,
                     email: backendUser.email || newLogin.email,
@@ -102,10 +102,11 @@ export default function Login({ setUsers }) {
 
 
             const role = finalizedUser.role ? finalizedUser.role.toUpperCase() : "";
-            if (role === "MODERATOR") {
+            console.log("final role:", finalizedUser.role, "->", role);
+           if (role === "MODERATOR") {
                 navigate("/moderatorDashboard", { replace: true });
             }else if (role === "STUDENT") {
-    navigate("/studentDashboard", { replace: true }); 
+                 navigate("/studentDashboard", { replace: true }); 
             }else {
                 navigate("/getPaths", { replace: true });
             }

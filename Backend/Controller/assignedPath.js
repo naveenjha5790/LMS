@@ -116,8 +116,52 @@ const showAssignments = async (req, res, next) => {
     }
 };
 
+const getCertificates = async (req, res, next) => {
+    const { id: userId, role } = req.user;
+    
+    
+        let queryFilter = {};
+        const normalizedRole = role.toUpperCase().trim();
 
+        if (normalizedRole === 'STUDENT') {
+            queryFilter.studentId = userId;
+        }
+
+        
+        const certificatesList = await prisma.Certificate.findMany({
+            where: queryFilter,
+            orderBy: {
+                issuedAt: 'desc'
+            },
+            include: {
+                student: { 
+                    select: {
+                        name: true,
+                        email: true
+                    }
+                }
+            }
+        });
+
+        
+        const formattedCertificates = certificatesList.map((cert) => ({
+            id: cert.id || cert._id,
+            studentId: cert.studentId,
+            pathTitle: cert.pathTitle,
+            secureHash: cert.secureHash,
+            issuedAt: cert.issuedAt,
+            studentName: cert.student?.name || "Unregistered Account",
+            studentEmail: cert.student?.email || "N/A"
+        }));
+
+        return res.status(StatusCodes.OK).json({
+            success: true,
+            count: formattedCertificates.length,
+            data: formattedCertificates
+        });
+    }
 module.exports={
     assignPath,
-    showAssignments
+    showAssignments,
+    getCertificates
 }

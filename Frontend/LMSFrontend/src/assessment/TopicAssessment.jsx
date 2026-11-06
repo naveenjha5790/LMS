@@ -172,7 +172,7 @@ export default function TopicAssessments({ topicId, isLMSManager }) {
                         setSelectedAssessmentTitle(ass.title);
                       }}
                     >
-                      Edit Questions
+                      + Add Questions
                     </Button>
                   </div>
                 </div>

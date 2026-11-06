@@ -14,6 +14,7 @@ import ListAssignments from "./assessment/listAssignment";
 import StudentDashboard from "./assessment/studentDashboard";
 import ManageUsersPage from "./admin/manageUser";
 import NotificationWorkspace from "./notification/showNotification";
+import CertificateWorkspace from "./assignment/viewCertificates";
 export default function Body() {
     const [users, setUsers] = React.useState(null);
     const [initializing, setInitializing] = React.useState(true); 
@@ -64,6 +65,7 @@ export default function Body() {
     const isLMSManager   = normalizedRole === 'LMS_MANAGER' || normalizedRole === 'MANAGER';
     const isModerator=normalizedRole==='MODERATOR';
     const isStudent=normalizedRole==='STUDENT';
+    const isContributor=normalizedRole==='CONTRIBUTOR'
         return (
         <Container className="py-4">
           
@@ -177,6 +179,13 @@ export default function Body() {
                 </Button>
             </Link>
         )}
+        {!isModerator && !isContributor &&(
+<Link to="/certificates">
+    <Button variant="outline-warning" size="sm" style={{ padding: "20px", margin: "20px", fontWeight: "bold", color: "black" }}>
+        📜 View Certificates
+      </Button>
+</Link>
+)}
     </div>
 )}
 
@@ -295,6 +304,11 @@ export default function Body() {
                     )
                 } 
             />
+<Route 
+  path="/certificates" 
+  element={users ? <CertificateWorkspace curUser={users} /> : <Navigate to="/login" replace />} 
+/>
+
         
             </Routes>
         </Container>

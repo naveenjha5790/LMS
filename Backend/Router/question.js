@@ -15,5 +15,5 @@ const {
     removeQuestion
 }=require('../Controller/question')
 router.route('/:aid/questions').post(authenticateUser,authrorizeContributor,addQuestion).get(authenticateUser,showQuestions);
-router.route('/questions/"qid').patch(authenticateUser,authrorizeContributor,updateQuestion).delete(authenticateUser,authrorizeContributor,removeQuestion);
+router.route('/questions/:qId').patch(authenticateUser,authrorizeContributor,updateQuestion).delete(authenticateUser,authrorizeContributor,removeQuestion);
 module.exports=router;

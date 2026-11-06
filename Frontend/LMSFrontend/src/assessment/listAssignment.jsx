@@ -228,163 +228,192 @@ const handleBackToDashboard = () => {
         );
     }
       return (
-        <Container fluid className="py-4">
-            {error && <Alert variant="danger" dismissible onClose={() => setError("")}>{error}</Alert>}
+    <Container fluid className="py-4">
+        {error && <Alert variant="danger" dismissible onClose={() => setError("")}>{error}</Alert>}
 
-            <Row>
-   
-                <Col md={4} className="mb-4">
-                    <h4 className="fw-bold mb-3 text-secondary">My Assigned Paths</h4>
-                    {assignments.length === 0 ? (
-                        <Alert variant="warning">No learning paths have been assigned to your profile yet.</Alert>
-                    ) : (
-                        <div className="d-flex flex-column gap-3">
-                            {assignments.map((item) => {
-    const isCurrentActive = selectedPath?.id === item.pathid || selectedPath?.id === item.id;
+        <Row>
 
-    return (
-        <Card 
-            key={item.id} 
-            className={`shadow-sm border-start border-4 ${isCurrentActive ? "border-primary bg-light" : "border-success"}`}
-        >
-            <Card.Body>
-                <Card.Title className="fw-bold text-dark">{item.title || "Untitled Course"}</Card.Title>
-                <Card.Text className="text-muted small">
-                    {item.description || "No description provided for this path structure."}
-                </Card.Text>
-                <div className="d-flex justify-content-between align-items-center mt-3">
-                    <Badge bg="success">Assigned</Badge>
-                    <Button 
-                        variant={isCurrentActive ? "primary" : "outline-primary"} 
-                        size="sm"
-                        onClick={() => handleViewSubjects(item)} 
-                    >
-                        View Subjects →
-                    </Button>
-                </div>
-            </Card.Body>
-        </Card>
-    );
-})}
+            <Col md={isStudent ? 4 : 12} className="mb-4">
+  <h4 className="fw-bold mb-3 text-secondary">
+    {isStudent ? "My Assigned Paths" : "Path Assignments"}
+  </h4>
+                {assignments.length === 0 ? (
+                    <Alert variant="warning">No learning paths have been assigned to your profile yet.</Alert>
+                ) : (
+                    <div className="d-flex flex-column gap-3">
+                        {assignments.map((item) => {
+                            const isCurrentActive = selectedPath?.id === item.pathid || selectedPath?.id === item.id;
+                            return (
+                                <Card
+                                    key={item.id}
+                                    className={`shadow-sm border-start border-4 ${isCurrentActive ? "border-primary bg-light" : "border-success"}`}
+                                >
+                                    <Card.Body>
+                                        <Card.Title className="fw-bold text-dark">{item.title || "Untitled Course"}</Card.Title>
+                                        <Card.Text className="text-muted small">
+                                            {item.description || "No description provided for this path structure."}
+                                        </Card.Text>
+                                        {!isStudent && (
+  <div className="small border rounded bg-white p-2 mt-2">
+    <div>👤 <strong>{item.student?.name || item.studentName || "Unknown student"}</strong></div>
+    <div className="text-muted">{item.student?.email || item.studentEmail}</div>
+    <div className="text-muted" style={{ fontSize: "11px" }}>
+      ID: {item.student?.id || item.studentId}
+    </div>
+  </div>
+)}
+                                        <div className="d-flex justify-content-between align-items-center mt-3">
+                                            <Badge bg="success">Assigned</Badge>
+                                           {isStudent&& (
+                                            <Button
+                                                variant={isCurrentActive ? "primary" : "outline-primary"}
+                                                size="sm"
+                                                onClick={() => handleViewSubjects(item)}
+                                            >
+                                                View Subjects →
+                                            </Button>
+                                           )}
+                                        </div>
+                                    </Card.Body>
+                                </Card>
+                            );
+                        })}
+                    </div>
+                )}
+            </Col>
 
-                        </div>
-                    )}
-                </Col>
+            {isStudent && (
+            <Col md={8}>
+                {!selectedPath ? (
+                    <div className="text-center py-5 bg-white border rounded shadow-sm">
+                        <h5 className="text-muted mb-0">Select an assigned learning path from the column list to start studying.</h5>
+                    </div>
+                ) : (
+                    <Card className="shadow-sm border-0">
+                        <Card.Header className="bg-dark text-white p-3">
+                            <h5 className="mb-0 fw-bold">📖 Workspace Content: {selectedPath.title}</h5>
+                        </Card.Header>
 
-                <Col md={8}>
-                    {!selectedPath ? (
-                        <div className="text-center py-5 bg-white border rounded shadow-sm">
-                            <h5 className="text-muted mb-0">Select an assigned learning path from the column list to start studying.</h5>
-                        </div>
-                    ) : (
-                        <Card className="shadow-sm border-0">
-                            <Card.Header className="bg-dark text-white p-3">
-                                <h5 className="mb-0 fw-bold">📖 Workspace Content: {selectedPath.title}</h5>
-                            </Card.Header>
-                            <Card.Body className="bg-light">
-                                <Row>
-                          
-                                    <Col sm={4} className="border-end mb-3 mb-sm-0">
-                                        <h6 className="fw-bold text-primary mb-2">📚 Subjects</h6>
-                                        {loadingSubjects && (
-                                            <div className="text-center py-2">
-                                                <Spinner animation="border" size="sm" variant="primary" />
-                                            </div>
-                                        )}
-                                        {!loadingSubjects && subjects.length === 0 && (
-                                            <p className="text-muted small italic">No subjects mapped here.</p>
-                                        )}
-                                        <ListGroup size="sm">
-                                            {subjects.map((sub) => (
-                                                <ListGroup.Item 
-                                                    key={sub._id || sub.id}
-                                                    action
-                                                    active={selectedSubject?._id === sub._id || selectedSubject?.id === sub.id}
-                                                    onClick={() => handleViewChapters(sub)}
-                                                    className="small fw-semibold text-truncate"
-                                                >
-                                                    {sub.title}
-                                                </ListGroup.Item>
-                                            ))}
-                                        </ListGroup>
-                                    </Col>
+                        <Card.Body className="bg-light">
+                            {loadingSubjects && (
+                                <div className="text-center py-2">
+                                    <Spinner animation="border" size="sm" variant="primary" />
+                                </div>
+                            )}
+                            
+                            {!loadingSubjects && subjects.length === 0 && (
+                                <p className="text-muted small fst-italic mb-0">No subjects mapped here.</p>
+                            )}
 
-                                    <Col sm={4} className="border-end mb-3 mb-sm-0">
-                                        <h6 className="fw-bold text-success mb-2">📑 Chapters</h6>
-                                        {!selectedSubject ? (
-                                            <p className="text-muted small italic">Select a subject to view chapters...</p>
-                                        ) : loadingChapters ? (
-                                            <div className="text-center py-2">
-                                                <Spinner animation="border" size="sm" variant="success" />
-                                            </div>
-                                        ) : chapters.length === 0 ? (
-                                            <p className="text-muted small italic">No chapters published.</p>
-                                        ) : (
-                                            <ListGroup size="sm">
-                                                {chapters.map((ch) => (
-                                                    <ListGroup.Item 
-                                                        key={ch._id || ch.id}
-                                                        action
-                                                        active={selectedChapter?._id === ch._id || selectedChapter?.id === ch.id}
-                                                        onClick={() => handleViewTopics(ch)}
-                                                        className="small text-truncate"
-                                                    >
-                                                        {ch.title}
-                                                    </ListGroup.Item>
-                                                ))}
-                                            </ListGroup>
-                                        )}
-                                    </Col>
+                            <div className="d-flex flex-column gap-2">
+                                {subjects.map((sub) => {
+                                    const subId = sub.id || sub._id;
+                                    const subOpen = !!selectedSubject && (selectedSubject.id || selectedSubject._id) === subId;
 
-                                    <Col sm={4}>
-                                        <h6 className="fw-bold text-danger mb-2">💡 Course Topics</h6>
-                                        {!selectedChapter ? (
-                                            <p className="text-muted small italic">Select a chapter to access topics...</p>
-                                        ) : loadingTopics ? (
-                                            <div className="text-center py-2">
-                                                <Spinner animation="border" size="sm" variant="danger" />
-                                            </div>
-                                        ) : topics.length === 0 ? (
-                                            <p className="text-muted small italic">No topics uploaded yet.</p>
-                                        ) : (
-                                            <div className="d-flex flex-column gap-2" style={{ maxHeight: "400px", overflowY: "auto" }}>
-                                                {topics.map((topicItem) => (
-                                                    <Card key={topicItem._id || topicItem.id} className="bg-white border p-2 shadow-sm">
-                                                        <div className="fw-bold text-dark" style={{ fontSize: "13px" }}>
-                                                            {topicItem.title}
+                                    return (
+                                        <div key={subId}>
+                                  
+                                            <Button
+                                                variant={subOpen ? "primary" : "outline-primary"}
+                                                className="w-100 text-start fw-semibold d-flex justify-content-between align-items-center"
+                                                onClick={() => handleViewChapters(sub)}
+                                            >
+                                                <span>📚 {sub.title}</span>
+                                                <span>{subOpen ? "▾" : "▸"}</span>
+                                            </Button>
+
+                                            {subOpen && (
+                                                <div className="ms-3 ps-3 mt-2 border-start border-3 border-primary">
+                                                    {loadingChapters ? (
+                                                        <div className="py-2">
+                                                            <Spinner animation="border" size="sm" variant="success" />
                                                         </div>
-                                                                                                                {topicItem.description && (
-                                                            <div className="text-muted my-1" style={{ fontSize: "11px", display: "-webkit-box", WebkitLineClamp: "2", WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                                                                {topicItem.description}
-                                                            </div>
-                                                        )}
-                                                        <TopicContentViewer topicItem={topicItem} 
-                                                        pathTitle={selectedPath?.title}
-                                                        />
-                                                        {topicItem.contentUrl && (
-                                                            <Button 
-                                                                href={topicItem.contentUrl} 
-                                                                target="_blank" 
-                                                                rel="noopener noreferrer"
-                                                                variant="outline-danger" 
-                                                                size="sm" 
-                                                                className="mt-1 py-1 px-2 fw-semibold w-100"
-                                                                style={{ fontSize: "11px" }}
-                                                            >
-                                                                📂 Access Material
-                                                            </Button>
-                                                        )}
-                                                    </Card>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </Col>
-                                </Row>
-                            </Card.Body>
-                        </Card>
-                    )}
-                </Col>
-            </Row>
-        </Container>
-    );
+                                                    ) : chapters.length === 0 ? (
+                                                        <p className="text-muted small fst-italic mb-0">No chapters published.</p>
+                                                    ) : (
+                                                        <div className="d-flex flex-column gap-2">
+                                                            {chapters.map((ch) => {
+                                                                const chId = ch.id || ch._id;
+                                                                const chOpen = !!selectedChapter && (selectedChapter.id || selectedChapter._id) === chId;
+
+                                                                return (
+                                                                    <div key={chId}>
+                                                                      
+                                                                        <Button
+                                                                            variant={chOpen ? "success" : "outline-success"}
+                                                                            size="sm"
+                                                                            className="w-100 text-start fw-semibold d-flex justify-content-between align-items-center"
+                                                                            onClick={() => handleViewTopics(ch)}
+                                                                        >
+                                                                            <span>📑 {ch.title}</span>
+                                                                            <span>{chOpen ? "▾" : "▸"}</span>
+                                                                        </Button>
+
+                                                                        {chOpen && (
+                                                                            <div className="ms-3 ps-3 mt-2 border-start border-3 border-success">
+                                                                                {loadingTopics ? (
+                                                                                    <div className="py-2">
+                                                                                        <Spinner animation="border" size="sm" variant="danger" />
+                                                                                    </div>
+                                                                                ) : topics.length === 0 ? (
+                                                                                    <p className="text-muted small fst-italic mb-0">No topics uploaded yet.</p>
+                                                                                ) : (
+                                                                                    <div className="d-flex flex-column gap-2">
+                                                                                        {/* LEVEL 3: Topics */}
+                                                                                        {topics.map((topicItem) => (
+                                                                                            <Card key={topicItem.id || topicItem._id} className="bg-white border p-2 shadow-sm">
+                                                                                                <div className="fw-bold text-dark" style={{ fontSize: "13px" }}>
+                                                                                                    💡 {topicItem.title}
+                                                                                                </div>
+                                                                                                {topicItem.description && (
+                                                                                                    <div
+                                                                                                        className="text-muted my-1"
+                                                                                                        style={{ fontSize: "11px", display: "-webkit-box", WebkitLineClamp: "2", WebkitBoxOrient: "vertical", overflow: "hidden" }}
+                                                                                                    >
+                                                                                                        {topicItem.description}
+                                                                                                    </div>
+                                                                                                )}
+                                                                                                <TopicContentViewer
+                                                                                                    topicItem={topicItem}
+                                                                                                    pathTitle={selectedPath?.title}
+                                                                                                    isStudent={isStudent}
+                                                                                                />
+                                                                                                {topicItem.contentUrl && (
+                                                                                                    <Button
+                                                                                                        href={topicItem.contentUrl}
+                                                                                                        target="_blank"
+                                                                                                        rel="noopener noreferrer"
+                                                                                                        variant="outline-danger"
+                                                                                                        size="sm"
+                                                                                                        className="mt-1 py-1 px-2 fw-semibold w-100"
+                                                                                                        style={{ fontSize: "11px" }}
+                                                                                                    >
+                                                                                                        📂 Access Material
+                                                                                                    </Button>
+                                                                                                )}
+                                                                                            </Card>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </Card.Body>
+                    </Card>
+                )}
+            </Col>
+            )}
+        </Row>
+    </Container>
+);
 }

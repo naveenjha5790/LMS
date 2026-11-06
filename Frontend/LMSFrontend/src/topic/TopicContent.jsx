@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Modal, Button, Ratio, Spinner, Alert, ListGroup, Tabs, Tab } from "react-bootstrap";
 import StudentQuizModal from "../Questions/viewQuestions";
 
-export default function TopicContentViewer({ topicItem, pathTitle }) {
+export default function TopicContentViewer({ topicItem, pathTitle ,isStudent}) {
   const [showViewer, setShowViewer] = useState(false);
 
   const [videos, setVideos] = useState([]);
@@ -128,7 +128,7 @@ export default function TopicContentViewer({ topicItem, pathTitle }) {
             </div>
           ) : (
             <Tabs defaultActiveKey="videos" className="mb-3 fw-bold">
-              {/* TAB 1: VIDEO LESSON PLAYER */}
+        
               <Tab eventKey="videos" title={`📹 Video Lessons (${videos.length})`}>
                 {videos.length === 0 ? (
                   <Alert variant="info" className="my-2 small">
@@ -136,7 +136,7 @@ export default function TopicContentViewer({ topicItem, pathTitle }) {
                   </Alert>
                 ) : (
                   <div className="row g-3 mt-1">
-                    {/* Player */}
+               
                     <div className="col-lg-8">
                       {activeVideoUrl ? (
                         <div className="shadow rounded overflow-hidden bg-dark">
@@ -146,7 +146,7 @@ export default function TopicContentViewer({ topicItem, pathTitle }) {
                               src={activeVideoUrl}
                               controls
                               preload="metadata"   
-                              onPlay={() => handleMarkVideoAsDone(activeVideo)}
+                              onPlay={isStudent ?() => handleMarkVideoAsDone(activeVideo):"Undefined"}
                             />
                           </Ratio>
                         </div>
@@ -215,6 +215,7 @@ export default function TopicContentViewer({ topicItem, pathTitle }) {
                                 📥 Open Assessment
                               </Button>
                             )}
+                            {isStudent && (
                             <Button
                               variant="success"
                               size="sm"
@@ -224,6 +225,7 @@ export default function TopicContentViewer({ topicItem, pathTitle }) {
                             >
                               ✍️ Attempt Live Quiz
                             </Button>
+                            )}
                           </ListGroup.Item>
                         );
                       })}

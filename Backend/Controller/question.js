@@ -86,55 +86,103 @@ const showQuestions=async (req,res)=>{
     )
 
 }
-const updateQuestion=async (req,res)=>{
-    const questionId=req.params.qId;
-        const {questionText,options,correctIndex}=req.body;
-        const question=await prisma.Question.findUnique({
-            where:{id:questionId}
+const updateQuestion = async (req, res) => {
+    try {
+        const questionId = req.params.qId;
+        const { questionText, options, correctIndex } = req.body;
+
+        const question = await prisma.Question.findUnique({
+            where: { id: questionId },
+            include: { assessment: true } 
         });
-        if (!question){
-            throw new NotFoundError("No question exist with the given id");
+
+        if (!question) {
+            return res.status(404).json({ message: "No question exists with the given id" });
         }
-        if (assessment.createdBy!==req.user.id){
-            throw new NotFoundError("Only those who add questions can update it")
+
+      
+        if (question.assessment && question.assessment.createdBy !== req.user.id) {
+            return res.status(403).json({ message: "Only those who add questions can update it" });
         }
-        const updatedData={}
-        if (questionText && questionText!==question.questionText){
-            updatedData.questionText=questionText
+
+        const updatedData = {};
+        if (questionText && questionText.trim() !== question.questionText) {
+            updatedData.questionText = questionText.trim();
         }
-        if (options && options!==question.options){
-            updatedData.options=options
-        }
-        if (correctIndex && correctIndex!==question.correctIndex){
-                updatedData.correctIndex=correctIndex
-        }
-        const updateQuestion=await prisma.Assessment.update({
-            where:{id:questionId},
-            data:updatedData
-        })
-        return res.status(StatusCodes.OK).json(updatedData)
-}
-const removeQuestion=async (req,res)=>{
-    const questionId=req.params.qId;
-        const question=await prisma.Question.findUnique({
-            where:{id:questionId}
-        });
-        if (!question){
-            throw new NotFoundError("No question exist with the given id");
-        }
-        if (assessment.createdBy!==req.user.id){
-            throw new NotFoundError("Only those who add questions can delete it")
+        if (options && Array.isArray(options)) {
+            updatedData.options = options.map(opt => opt.trim());
         }
         
-        await prisma.Question.delete({
-            where:{
-                id:questionId
+
+        if (correctIndex !== undefined && correctIndex !== null) {
+            const parsedIndex = parseInt(correctIndex, 10);
+            if (!isNaN(parsedIndex) && parsedIndex !== question.correctIndex) {
+                updatedData.correctIndex = parsedIndex;
             }
-        })
+        }
+
+        if (Object.keys(updatedData).length === 0) {
+            return res.status(200).json(question);
+        }
+
+        const updatedQuestion = await prisma.Question.update({
+            where: { id: questionId },
+            data: updatedData
+        });
+
+        return res.status(200).json(updatedQuestion);
+
+    } catch (error) {
+        console.error("Error inside updateQuestion:", error);
+        return res.status(500).json({ 
+            message: "Internal Server Error running update operations", 
+            error: error.message 
+        });
+    }
+};
+
+const removeQuestion = async (req, res) => {
+    try {
+     
+        const questionId = req.params.id || req.params.qId;
+
+        if (!questionId) {
+            return res.status(400).json({ message: "Question ID parameter is required" });
+        }
+
+        const question = await prisma.Question.findUnique({
+            where: { id: questionId },
+            include: { assessment: true } 
+        });
+
+        if (!question) {
+            return res.status(404).json({ message: "No question exists with the given id" });
+        }
+
+
+        if (question.assessment && question.assessment.createdBy !== req.user.id) {
+            return res.status(403).json({ message: "Only those who add questions can delete it" });
+        }
+
+        await prisma.Question.delete({
+            where: {
+                id: questionId
+            }
+        });
+
         return res.status(StatusCodes.OK).json({
-            message:"Assessment is successfully deleted"
-        })
-}
+            message: "Question is successfully deleted"
+        });
+
+    } catch (error) {
+        console.error("Error inside removeQuestion:", error);
+        return res.status(500).json({ 
+            message: "Internal Server Error running delete operations", 
+            error: error.message 
+        });
+    }
+};
+
 module.exports={
     addQuestion,
     showQuestions,

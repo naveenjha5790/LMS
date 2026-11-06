@@ -100,7 +100,7 @@ export default function ListPaths({ curUser, paths, setPaths, onPathSelect }) {
 const refreshPathCatalogData = async () => {
   try {
     const token = localStorage.getItem("token");
-    const response = await fetch(`http://localhost:5000/api/getPaths`, { // Use your exact fetch paths endpoint
+    const response = await fetch(`http://localhost:5000/api/getPaths`, { 
       method: "GET",
       headers: {
         "Content-Type": "application/json",

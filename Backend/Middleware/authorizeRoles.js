@@ -47,11 +47,18 @@ const authrorizeStaff=async (req,res,next)=>{
         error:"You are not allowed to access"
     })
 }
+const authorizeStudentManager=async (req,res,next)=>{
+    if (req.user && (req.user.role==='LMS_MANAGER' || req.user.role==='STUDENT' || req.user.role==='ADMIN')){
+        return next();
+    }
+    return res.status(StatusCodes.UNAUTHORIZED).json({error:"You are not allowed to access"});
+}
 module.exports={
     authorizeAdmin,
     authorizeManager,
     authorizeModerator,
     authrorizeContributor,
     authorizeStudent,
-    authrorizeStaff
+    authrorizeStaff,
+    authorizeStudentManager
 }
